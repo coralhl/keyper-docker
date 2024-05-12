@@ -1,8 +1,8 @@
 dn: cn=config
 objectClass: olcGlobal
 cn: config
-olcArgsFile: /run/openldap/slapd.args
-olcPidFile: /run/openldap/slapd.pid
+olcArgsFile: /run/slapd/slapd.args
+olcPidFile: /run/slapd/slapd.pid
 olcDisallows: bind_anon
 olcRequires: authc
 structuralObjectClass: olcGlobal
@@ -17,7 +17,7 @@ olcTLSVerifyClient: {{LDAP_TLS_VERIFY_CLIENT}}
 dn: cn=module{0},cn=config
 objectClass: olcModuleList
 cn: module{0}
-olcModulePath: /usr/lib/openldap
+olcModulePath: /usr/lib/ldap
 olcModuleLoad: {0}back_mdb.so
 olcModuleLoad: {0}back_monitor.so
 olcModuleLoad: {0}ppolicy.so
@@ -31,12 +31,12 @@ objectClass: olcSchemaConfig
 cn: schema
 structuralObjectClass: olcSchemaConfig
 
-include: file:///etc/openldap/schema/core.ldif
-include: file:///etc/openldap/schema/cosine.ldif
-include: file:///etc/openldap/schema/inetorgperson.ldif
-include: file:///etc/openldap/schema/nis.ldif
-include: file:///etc/openldap/schema/openldap.ldif
-include: file:///etc/openldap/schema/ppolicy.ldif
+include: file:///etc/ldap/schema/core.ldif
+include: file:///etc/ldap/schema/cosine.ldif
+include: file:///etc/ldap/schema/inetorgperson.ldif
+include: file:///etc/ldap/schema/nis.ldif
+include: file:///etc/ldap/schema/openldap.ldif
+include: file:///etc/ldap/schema/ppolicy.ldif
 
 dn: olcDatabase={-1}frontend,cn=config
 objectClass: olcDatabaseConfig
@@ -53,7 +53,7 @@ olcAddContentAcl: TRUE
 olcLastMod: TRUE
 olcMaxDerefDepth: 15
 olcReadOnly: FALSE
-olcRootDN: cn=config
+olcRootDN: cn=admin,cn=config
 olcRootPW: {{LDAP_ADMIN_PASSWORD}}
 olcSyncUseSubentry: FALSE
 olcMonitoring: FALSE
@@ -63,9 +63,9 @@ dn: olcDatabase={1}mdb,cn=config
 objectClass: olcDatabaseConfig
 objectClass: olcMdbConfig
 olcDatabase: {1}mdb
-olcDbDirectory: /var/lib/openldap/openldap-data
+olcDbDirectory: /var/lib/ldap
 olcSuffix: {{LDAP_BASEDN}}
-olcRootDN: cn=Manager,{{LDAP_BASEDN}}
+olcRootDN: cn=admin,{{LDAP_BASEDN}}
 olcRootPW: {{LDAP_ADMIN_PASSWORD}}
 olcDbIndex: objectClass eq
 olcDbIndex: cn eq

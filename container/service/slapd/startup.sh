@@ -19,10 +19,10 @@ log-helper info "Setting UID/GID for nginx to ${NGINX_UID}/${NGINX_GID}"
 [ "$(id -g nginx)" -eq ${NGINX_GID} ] || groupmod -g ${NGINX_GID} ldap
 [ "$(id -u nginx)" -eq ${NGINX_UID} ] || usermod -u ${NGINX_UID} -g ${NGINX_GID} ldap
 
-[ -d /etc/openldap/slapd.d ] || mkdir /etc/openldap/slapd.d
-[ -d /etc/openldap/certs ] || mkdir /etc/openldap/certs
-[ -d /run/openldap ] || mkdir /run/openldap
-[ -d /var/log/openldap ] || mkdir /var/log/openldap
+[ -d /etc/ldap/slapd.d ] || mkdir /etc/ldap/slapd.d
+[ -d /etc/ldap/tls ] || mkdir /etc/ldap/tls
+[ -d /run/slapd ] || mkdir /run/slapd
+[ -d /var/log/ldap ] || mkdir /var/log/ldap
 
 ulimit ${LDAP_NOFILE}
 
@@ -41,20 +41,20 @@ log-helper info "ADMIN PASSWD: ${PASS}"
 log-helper info "BASEDN:       ${BASEDN}"
 log-helper info '--------------------------------------------------'
 
-cp /etc/nginx/certs/* /etc/openldap/certs
+cp /etc/nginx/certs/* /etc/ldap/tls
 
-LDAP_TLS_CA_CRT_PATH=/etc/openldap/certs/$LDAP_TLS_CA_CRT_FILENAME
-LDAP_TLS_CRT_PATH=/etc/openldap/certs/$LDAP_TLS_CRT_FILENAME
-LDAP_TLS_KEY_PATH=/etc/openldap/certs/$LDAP_TLS_KEY_FILENAME
-LDAP_TLS_DH_PARAM_PATH=/etc/openldap/certs/$LDAP_TLS_DH_PARAM_FILENAME
+LDAP_TLS_CA_CRT_PATH=/etc/ldap/tls/$LDAP_TLS_CA_CRT_FILENAME
+LDAP_TLS_CRT_PATH=/etc/ldap/tls/$LDAP_TLS_CRT_FILENAME
+LDAP_TLS_KEY_PATH=/etc/ldap/tls/$LDAP_TLS_KEY_FILENAME
+LDAP_TLS_DH_PARAM_PATH=/etc/ldap/tls/$LDAP_TLS_DH_PARAM_FILENAME
 
 FIRST_START_DONE="${CONTAINER_STATE_DIR}/openldap-first-start-done"
 
 if [ ! -e "$FIRST_START_DONE" ]; then
 	BOOTSTRAP=false
 
-	if [ -z "$(ls -A /var/lib/openldap/openldap-data | grep -v lost+found)" ] &&     \
-	   [ -z "$(ls -A /etc/openldap/slapd.d | grep -v lost+found)" ]; then
+	if [ -z "$(ls -A /var/lib/ldap | grep -v lost+found)" ] &&     \
+	   [ -z "$(ls -A /etc/ldap/slapd.d | grep -v lost+found)" ]; then
 		BOOTSTRAP=true
 
 		log-helper info "Openldap DB and Config directories are empty..."
@@ -63,6 +63,7 @@ if [ ! -e "$FIRST_START_DONE" ]; then
 		cd /container/service/slapd/assets/ldif
 		cp ../templates/config.ldif.tmpl config.ldif
 		cp ../templates/data.ldif.tmpl data.ldif
+		cp ../templates/ppolicy.ldif.tmpl ppolicy.ldif
 		sed -i "s/{{LDAP_BASEDN}}/${BASEDN}/g" config.ldif
 		sed -i "s/{{LDAP_ADMIN_PASSWORD}}/${PASS}/g" config.ldif
 		sed -i "s|{{LDAP_TLS_CA_CRT_PATH}}|${LDAP_TLS_CA_CRT_PATH}|g" config.ldif
@@ -75,34 +76,35 @@ if [ ! -e "$FIRST_START_DONE" ]; then
 		sed -i "s/{{LDAP_BASEDN}}/${BASEDN}/g" data.ldif
 		sed -i "s/{{LDAP_ADMIN_PASSWORD}}/${PASS}/g" data.ldif
 		sed -i "s/{{LDAP_ORGANIZATION}}/${ORG_NAME}/g" data.ldif
+		sed -i "s/{{LDAP_BASEDN}}/${BASEDN}/g" ppolicy.ldif
 
 		log-helper info "Creating OpenLDAP Database: START"
 
 		cd /container/service/slapd/assets
-		slapadd -n 0 -F /etc/openldap/slapd.d -l ldif/config.ldif
-		slapadd -n 0 -F /etc/openldap/slapd.d -l schema/memberof.ldif
-		slapadd -n 0 -F /etc/openldap/slapd.d -l schema/sudo.ldif
-		slapadd -n 0 -F /etc/openldap/slapd.d -l schema/openssh-lpk.ldif
-		slapadd -n 0 -F /etc/openldap/slapd.d -l ldif/ppolicy.ldif
-		slapadd -n 0 -F /etc/openldap/slapd.d -l ldif/auditlog.ldif
+		slapadd -n 0 -F /etc/ldap/slapd.d -l ldif/config.ldif
+		slapadd -n 0 -F /etc/ldap/slapd.d -l schema/memberof.ldif
+		slapadd -n 0 -F /etc/ldap/slapd.d -l schema/sudo.ldif
+		slapadd -n 0 -F /etc/ldap/slapd.d -l schema/openssh-lpk.ldif
+		slapadd -n 0 -F /etc/ldap/slapd.d -l ldif/ppolicy.ldif
+		slapadd -n 0 -F /etc/ldap/slapd.d -l ldif/auditlog.ldif
 
-		slapadd -n 1 -F /etc/openldap/slapd.d -l ldif/data.ldif
+		slapadd -n 1 -F /etc/ldap/slapd.d -l ldif/data.ldif
 
 		log-helper info "Creating OpenLDAP Database: END"
-	elif [ ! -z "$(ls -A /var/lib/openldap/openldap-data | grep -v lost+found)" ] &&     \
-	   [ -z "$(ls -A /etc/openldap/slapd.d | grep -v lost+found)" ]; then
-		log-helper error "Error: The database directory /var/lib/openldap/openldap-data is empty but not the config directory /etc/openldap/slapd.d"
+	elif [ ! -z "$(ls -A /var/lib/ldap | grep -v lost+found)" ] &&     \
+	   [ -z "$(ls -A /etc/ldap/slapd.d | grep -v lost+found)" ]; then
+		log-helper error "Error: The database directory /var/lib/ldap is empty but not the config directory /etc/ldap/slapd.d"
 		exit 1
-	elif [ -z "$(ls -A /var/lib/openldap/openldap-data | grep -v lost+found)" ] &&     \
-	   [ ! -z "$(ls -A /etc/openldap/slapd.d | grep -v lost+found)" ]; then
-		log-helper error "Error: The config directory /etc/openldap/slapd.d is empty but not the data directory /var/lib/openldap/openldap-data"
+	elif [ -z "$(ls -A /var/lib/ldap | grep -v lost+found)" ] &&     \
+	   [ ! -z "$(ls -A /etc/ldap/slapd.d | grep -v lost+found)" ]; then
+		log-helper error "Error: The config directory /etc/ldap/slapd.d is empty but not the data directory /var/lib/ldap"
 		exit 1
 	fi
 
 	touch $FIRST_START_DONE
 fi
 
-#chown -R ldap:ldap /etc/openldap/slapd.d /run/openldap /var/log/openldap /var/lib/openldap /etc/openldap/certs
-chown -R nginx:nginx /etc/openldap/slapd.d /run/openldap /var/log/openldap /var/lib/openldap /etc/openldap/certs
+#chown -R ldap:ldap /etc/ldap/slapd.d /run/slapd /var/log/ldap /var/lib/ldap /etc/ldap/tls
+chown -R nginx:nginx /etc/ldap/slapd.d /run/slapd /var/log/ldap /var/lib/ldap /etc/ldap/tls
 
 exit 0

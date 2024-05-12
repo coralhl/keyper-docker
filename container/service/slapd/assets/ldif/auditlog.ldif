@@ -3,5 +3,5 @@ objectClass: olcOverlayConfig
 objectClass: olcAuditlogConfig
 objectClass: top
 olcOverlay: auditlog
-olcAuditlogFile: /var/log/openldap/auditlog.ldif
+olcAuditlogFile: /var/log/ldap/auditlog.ldif
 

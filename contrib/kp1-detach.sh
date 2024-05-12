@@ -72,8 +72,8 @@ sudo docker volume create certs
 
 sudo docker run -p 8080:80 -p 8443:443 -p 2389:389 -p 2636:636 \
 --hostname octopod21.lan \
---mount source=slapd.d,target=/etc/openldap/slapd.d \
---mount source=openldap-data,target=/var/lib/openldap/openldap-data \
+--mount source=slapd.d,target=/etc/ldap/slapd.d \
+--mount source=openldap-data,target=/var/lib/ldap \
 --mount source=ssh-keys,target=/etc/sshca \
 --mount source=certs,target=/etc/nginx/certs \
 --detach \

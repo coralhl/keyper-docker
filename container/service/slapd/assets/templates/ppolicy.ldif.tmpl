@@ -3,6 +3,6 @@ objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig
 objectClass: top
 olcOverlay: ppolicy
-olcPPolicyDefault: cn=default,ou=policies,dc=dbsentry,dc=com
+olcPPolicyDefault: cn=default,ou=policies,{{LDAP_BASEDN}}
 olcPPolicyHashCleartext: TRUE
 

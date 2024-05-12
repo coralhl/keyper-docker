@@ -12,4 +12,4 @@
 #                                                                           #
 #############################################################################
 
-rm -rf /var/lib/openldap/openldap-data/* /etc/openldap/slapd.d
+rm -rf /var/lib/ldap/* /etc/ldap/slapd.d
